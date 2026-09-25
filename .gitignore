@@ -1,0 +1,22 @@
+## Build izlazi
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## MSBuild log
+*.binlog
+
+## NuGet
+*.nupkg
+
+## OS
+.DS_Store
+Thumbs.db

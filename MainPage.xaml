@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="EvidencijaStudenata.MainPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:EvidencijaStudenata.Converters"
+             Title="Evidencija studenata">
+    <ContentPage.Resources>
+        <converters:FlexibleDoubleConverter x:Key="DoubleConverter" />
+    </ContentPage.Resources>
+    <Grid Margin="12" RowDefinitions="*,Auto,Auto" RowSpacing="10">
+
+        <!-- Popis studenata (CollectionView povezan s kolekcijom Students iz ViewModela) -->
+        <Border Grid.Row="0" Stroke="#CCCCCC" StrokeThickness="1">
+            <Grid RowDefinitions="Auto,*">
+                <Grid Grid.Row="0" Padding="8" ColumnDefinitions="*,*,*,60,70,1.4*" ColumnSpacing="8"
+                      BackgroundColor="#EDEDED">
+                    <Label Grid.Column="0" Text="Ime" FontAttributes="Bold" TextColor="Black"/>
+                    <Label Grid.Column="1" Text="Prezime" FontAttributes="Bold" TextColor="Black"/>
+                    <Label Grid.Column="2" Text="JMBAG" FontAttributes="Bold" TextColor="Black"/>
+                    <Label Grid.Column="3" Text="God." FontAttributes="Bold" TextColor="Black"/>
+                    <Label Grid.Column="4" Text="Prosjek" FontAttributes="Bold" TextColor="Black"/>
+                    <Label Grid.Column="5" Text="E-mail" FontAttributes="Bold" TextColor="Black"/>
+                </Grid>
+
+                <CollectionView Grid.Row="1"
+                                ItemsSource="{Binding Students}"
+                                SelectionMode="Single"
+                                SelectedItem="{Binding SelectedStudent}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="8" ColumnDefinitions="*,*,*,60,70,1.4*" ColumnSpacing="8">
+                                <Label Grid.Column="0" Text="{Binding Ime}"/>
+                                <Label Grid.Column="1" Text="{Binding Prezime}"/>
+                                <Label Grid.Column="2" Text="{Binding Jmbag}"/>
+                                <Label Grid.Column="3" Text="{Binding GodinaStudija}"/>
+                                <Label Grid.Column="4" Text="{Binding ProsjekOcjena}"/>
+                                <Label Grid.Column="5" Text="{Binding Email}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+        </Border>
+
+        <!-- Unos / izmjena podataka o studentu (povezano s NoviStudent) -->
+        <Border Grid.Row="1" Stroke="#CCCCCC" StrokeThickness="1" Padding="8">
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,Auto,*,Auto,*"
+                  RowSpacing="4" ColumnSpacing="6">
+
+                <Label Grid.Row="0" Grid.Column="0" Text="Ime:" VerticalOptions="Center"/>
+                <Entry Grid.Row="0" Grid.Column="1" x:Name="ImeEntry" TextChanged="OnNoviStudentPoljePromijenjeno"
+                       Text="{Binding NoviStudent.Ime}"/>
+
+                <Label Grid.Row="0" Grid.Column="2" Text="Prezime:" VerticalOptions="Center"/>
+                <Entry Grid.Row="0" Grid.Column="3" x:Name="PrezimeEntry" TextChanged="OnNoviStudentPoljePromijenjeno"
+                       Text="{Binding NoviStudent.Prezime}"/>
+
+                <Label Grid.Row="0" Grid.Column="4" Text="JMBAG:" VerticalOptions="Center"/>
+                <Entry Grid.Row="0" Grid.Column="5"
+                       Text="{Binding NoviStudent.Jmbag}"/>
+
+                <Label Grid.Row="1" Grid.Column="0" Text="Godina:" VerticalOptions="Center"/>
+                <Entry Grid.Row="1" Grid.Column="1" Keyboard="Numeric"
+                       Text="{Binding NoviStudent.GodinaStudija}"/>
+
+                <Label Grid.Row="1" Grid.Column="2" Text="Prosjek:" VerticalOptions="Center"/>
+                <Entry Grid.Row="1" Grid.Column="3" TextChanged="OnProsjekTextChanged"
+                       Text="{Binding NoviStudent.ProsjekOcjena, Converter={StaticResource DoubleConverter}}"/>
+                
+                <Label Grid.Row="1" Grid.Column="4" Text="E-mail:" VerticalOptions="Center"/>
+                <Entry Grid.Row="1" Grid.Column="5"
+                       Text="{Binding NoviStudent.Email}"/>
+            </Grid>
+        </Border>
+
+        <!-- Naredbe (Dodaj / Spremi izmjene / Obriši) -->
+        <HorizontalStackLayout Grid.Row="2" HorizontalOptions="End" Spacing="10">
+            <Button Text="Dodaj" WidthRequest="110"
+                    Command="{Binding DodajStudentaCommand}"/>
+            <Button Text="Spremi izmjene" WidthRequest="130"
+                    Command="{Binding SpremiIzmjeneCommand}"/>
+            <Button Text="Obriši" WidthRequest="110"
+                    Command="{Binding ObrisiStudentaCommand}"/>
+        </HorizontalStackLayout>
+    </Grid>
+
+</ContentPage>

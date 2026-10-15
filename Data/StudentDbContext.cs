@@ -35,4 +35,17 @@ public class StudentDbContext : DbContext
     {
         optionsBuilder.UseSqlite(_connectionString);
     }
+
+    /// <summary>
+    /// Jedinstveni indeks nad stupcem Jmbag osigurava da baza podataka ne
+    /// dopusti dva zapisa s istim JMBAG-om, čak i kad bi provjera u sučelju
+    /// (StudentViewModel) iz nekog razloga bila zaobiđena - vidi poglavlje
+    /// 4.4. rada.
+    /// </summary>
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Student>()
+            .HasIndex(s => s.Jmbag)
+            .IsUnique();
+    }
 }

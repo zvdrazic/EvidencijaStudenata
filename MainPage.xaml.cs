@@ -16,7 +16,7 @@ public partial class MainPage : ContentPage
 
     private void OnNoviStudentPoljePromijenjeno(object? sender, TextChangedEventArgs e)
     {
-        ((RelayCommand)_viewModel.DodajStudentaCommand).RaiseCanExecuteChanged();
+        _viewModel.OsvjeziValidaciju();
     }
 
     /// <summary>
@@ -48,7 +48,6 @@ public partial class MainPage : ContentPage
         if (procisceno != noviTekst)
             entry.Text = procisceno;
 
-        ((RelayCommand)_viewModel.DodajStudentaCommand).RaiseCanExecuteChanged();
-        ((RelayCommand)_viewModel.SpremiIzmjeneCommand).RaiseCanExecuteChanged();
+        _viewModel.OsvjeziValidaciju();
     }
 }

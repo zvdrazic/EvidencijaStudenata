@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using EvidencijaStudenata.Data;
 using EvidencijaStudenata.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace EvidencijaStudenata.ViewModels;
 
@@ -42,7 +43,6 @@ public class StudentViewModel : INotifyPropertyChanged
         {
             _selectedStudent = value;
             OnPropertyChanged();
-            ((RelayCommand)SpremiIzmjeneCommand).RaiseCanExecuteChanged();
             ((RelayCommand)ObrisiStudentaCommand).RaiseCanExecuteChanged();
 
             // Odabirom postojećeg zapisa unosna se polja (povezana s
@@ -61,12 +61,29 @@ public class StudentViewModel : INotifyPropertyChanged
                     Email = value.Email,
                 };
             }
+
+            // Promjena odabira mijenja i koji zapis treba izuzeti iz provjere
+            // jedinstvenosti JMBAG-a (vidi OsvjeziValidaciju), pa i naredba
+            // Dodaj treba ponovnu provjeru, ne samo Spremi izmjene.
+            OsvjeziValidaciju();
         }
     }
 
     public ICommand DodajStudentaCommand { get; }
     public ICommand SpremiIzmjeneCommand { get; }
     public ICommand ObrisiStudentaCommand { get; }
+
+    private string _poruka = string.Empty;
+    /// <summary>
+    /// Kratka poruka prikazana korisniku kad JMBAG unesen u obrazac već
+    /// pripada drugom studentu (vidi poglavlje 4.4. rada - jedinstvenost
+    /// JMBAG-a). Prazan niz kad nema greške.
+    /// </summary>
+    public string Poruka
+    {
+        get => _poruka;
+        private set { _poruka = value; OnPropertyChanged(); }
+    }
 
     public StudentViewModel() : this(new StudentDbContext())
     {
@@ -86,16 +103,48 @@ public class StudentViewModel : INotifyPropertyChanged
         _ => DodajStudenta(),
         _ => !string.IsNullOrWhiteSpace(NoviStudent.Ime) &&
              !string.IsNullOrWhiteSpace(NoviStudent.Prezime) &&
-             NoviStudent.ProsjekOcjena >= 0 && NoviStudent.ProsjekOcjena <= 5);
+             NoviStudent.ProsjekOcjena >= 0 && NoviStudent.ProsjekOcjena <= 5 &&
+             !JmbagJeZauzet(NoviStudent.Jmbag, isključiId: 0));
 
         SpremiIzmjeneCommand = new RelayCommand(
             _ => SpremiIzmjene(),
             _ => SelectedStudent is not null &&
-                 NoviStudent.ProsjekOcjena >= 0 && NoviStudent.ProsjekOcjena <= 5);
+                 NoviStudent.ProsjekOcjena >= 0 && NoviStudent.ProsjekOcjena <= 5 &&
+                 !JmbagJeZauzet(NoviStudent.Jmbag, SelectedStudent.Id));
 
         ObrisiStudentaCommand = new RelayCommand(
             _ => ObrisiStudenta(),
             _ => SelectedStudent is not null);
+    }
+
+    /// <summary>
+    /// Provjerava postoji li već student s istim JMBAG-om (osim studenta čiji
+    /// je Id jednak isključiId - koristi se pri izmjeni postojećeg zapisa,
+    /// koji smije zadržati vlastiti JMBAG). Prazan JMBAG se ne smatra sukobom
+    /// - to već sprječava zasebna provjera obveznih polja.
+    /// </summary>
+    private bool JmbagJeZauzet(string jmbag, int isključiId) =>
+        !string.IsNullOrWhiteSpace(jmbag) &&
+        Students.Any(s => s.Jmbag == jmbag && s.Id != isključiId);
+
+    /// <summary>
+    /// Ponovno provjerava jedinstvenost unesenog JMBAG-a i prema potrebi
+    /// postavlja korisniku vidljivu poruku, te osvježava CanExecute stanje
+    /// naredbi Dodaj i Spremi izmjene. Poziva se iz MainPage.xaml.cs pri
+    /// svakoj promjeni relevantnih polja obrasca (vidi poglavlje 4.4. rada).
+    /// </summary>
+    public void OsvjeziValidaciju()
+    {
+        var sukobPriDodavanju = JmbagJeZauzet(NoviStudent.Jmbag, isključiId: 0);
+        var sukobPriIzmjeni = SelectedStudent is not null &&
+            JmbagJeZauzet(NoviStudent.Jmbag, SelectedStudent.Id);
+
+        Poruka = (sukobPriDodavanju || sukobPriIzmjeni)
+            ? "Student s unesenim JMBAG-om već postoji."
+            : string.Empty;
+
+        ((RelayCommand)DodajStudentaCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)SpremiIzmjeneCommand).RaiseCanExecuteChanged();
     }
 
     private void DodajStudenta()
@@ -103,7 +152,20 @@ public class StudentViewModel : INotifyPropertyChanged
         NoviStudent.ProsjekOcjena = Math.Clamp(NoviStudent.ProsjekOcjena, 0, 5);
 
         _context.Students.Add(NoviStudent);
-        _context.SaveChanges();
+        try
+        {
+            _context.SaveChanges();
+        }
+        catch (DbUpdateException)
+        {
+            // Jedinstveni indeks nad Jmbag (StudentDbContext.OnModelCreating)
+            // odbio je zapis na razini baze - krajnja sigurnosna mjera za
+            // slučaj da provjera iznad (JmbagJeZauzet) bude zaobiđena.
+            _context.Entry(NoviStudent).State = EntityState.Detached;
+            Poruka = "Student s unesenim JMBAG-om već postoji.";
+            return;
+        }
+
         Students.Add(NoviStudent);
         NoviStudent = new Student();
     }
@@ -123,7 +185,18 @@ public class StudentViewModel : INotifyPropertyChanged
         SelectedStudent.ProsjekOcjena = NoviStudent.ProsjekOcjena;
         SelectedStudent.Email = NoviStudent.Email;
 
-        _context.SaveChanges();
+        try
+        {
+            _context.SaveChanges();
+        }
+        catch (DbUpdateException)
+        {
+            // Vidi odgovarajući catch blok u DodajStudenta - ista krajnja
+            // sigurnosna mjera na razini baze.
+            _context.Entry(SelectedStudent).Reload();
+            Poruka = "Student s unesenim JMBAG-om već postoji.";
+            return;
+        }
 
         // Klasa Student ne implementira INotifyPropertyChanged, pa CollectionView
         // ne uočava izmjenu vrijednosti postojećeg objekta. Zamjena stavke NA

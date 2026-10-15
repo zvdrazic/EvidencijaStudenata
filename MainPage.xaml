@@ -44,7 +44,7 @@
 
         <!-- Unos / izmjena podataka o studentu (povezano s NoviStudent) -->
         <Border Grid.Row="1" Stroke="#CCCCCC" StrokeThickness="1" Padding="8">
-            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,Auto,*,Auto,*"
+            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*,Auto,*,Auto,*"
                   RowSpacing="4" ColumnSpacing="6">
 
                 <Label Grid.Row="0" Grid.Column="0" Text="Ime:" VerticalOptions="Center"/>
@@ -56,7 +56,7 @@
                        Text="{Binding NoviStudent.Prezime}"/>
 
                 <Label Grid.Row="0" Grid.Column="4" Text="JMBAG:" VerticalOptions="Center"/>
-                <Entry Grid.Row="0" Grid.Column="5"
+                <Entry Grid.Row="0" Grid.Column="5" x:Name="JmbagEntry" TextChanged="OnNoviStudentPoljePromijenjeno"
                        Text="{Binding NoviStudent.Jmbag}"/>
 
                 <Label Grid.Row="1" Grid.Column="0" Text="Godina:" VerticalOptions="Center"/>
@@ -66,10 +66,14 @@
                 <Label Grid.Row="1" Grid.Column="2" Text="Prosjek:" VerticalOptions="Center"/>
                 <Entry Grid.Row="1" Grid.Column="3" TextChanged="OnProsjekTextChanged"
                        Text="{Binding NoviStudent.ProsjekOcjena, Converter={StaticResource DoubleConverter}}"/>
-                
+
                 <Label Grid.Row="1" Grid.Column="4" Text="E-mail:" VerticalOptions="Center"/>
                 <Entry Grid.Row="1" Grid.Column="5"
                        Text="{Binding NoviStudent.Email}"/>
+
+                <!-- Poruka o sukobu JMBAG-a (StudentViewModel.OsvjeziValidaciju) -->
+                <Label Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="6"
+                       Text="{Binding Poruka}" TextColor="Red" FontSize="12"/>
             </Grid>
         </Border>
 
